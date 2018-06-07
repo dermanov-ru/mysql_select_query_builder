@@ -1,0 +1,101 @@
+# --- files ---
+.DS_Store
+Thumbs.db
+/nbproject/
+/.idea/
+/*.sublime-project
+/*.sublime-workspace
+
+# --- configs ---
+#.gitignore
+#.htaccess
+
+# --- core ---
+/bitrix/*
+!/bitrix/components
+/bitrix/components/bitrix
+!/bitrix/modules
+/bitrix/modules/*
+!/bitrix/templates
+!/bitrix/php_interface
+/bitrix/php_interface/after_connect.php
+/bitrix/php_interface/after_connect_d7.php
+/bitrix/php_interface/dbconn.php
+!/bitrix/admin/
+/bitrix/admin/*
+
+# --- project modules ---
+!/bitrix/modules/trinet*
+
+# --- project admin scripts ---
+# any project pages
+!/bitrix/admin/trinet*
+!/bitrix/admin/project*
+# 1c exchange custom script
+!/bitrix/admin/1c_exchange_custom.php
+
+
+# --- media files ---
+#/images
+/upload
+/video
+/files
+#/i
+
+# --- log files ---
+/_logs/
+*.log
+log.txt
+
+# --- archives ---
+*.tar*
+*.zip*
+*.rar*
+
+# --- mysql files ---
+/*.sql
+
+# --- other ---
+#*.menu.php
+*.tmp
+/_*
+/test/
+/t.php
+test.php
+robots.txt
+sitemap*.xml
+/*.txt
+web.config
+.htaccess.restore
+*old*
+*/*cache*/
+
+cgi-bin/
+google*.html
+mywot*.html
+wmail*.html
+yandex*.html
+php.ini
+
+restore.php
+bitrix_server_test.php
+bitrixsetup.php
+
+phpMyAdmin
+pma
+adminer.php
+adminer.css
+
+bx_1c_import_lite.php
+/webstat
+
+# allows fast hide any files or folders from under git's eyes
+*_gitignore_*
+
+/_html/
+
+# content
+!/exp/*cache*
+
+# config
+/lib/conf/*
