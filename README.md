@@ -301,3 +301,447 @@ GROUP BY `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, `b_iblock_element_pro
 ORDER BY `COUNT` DESC
 LIMIT 10
 ```
+
+## Настройка JOIN
+
+#### Пример
+ 
+```
+<?php
+$selectBuilder = $connection->selectFrom("b_iblock_element_property");
+
+$selectBuilder
+    ->addSelectField("ID")
+    ->join(
+        $selectBuilder->joinQuery("b_iblock_element_property", "iblock_element_id", "b_iblock_element_property", "IBLOCK_ELEMENT_ID", "INNER",  "joined_table_alias")
+    )
+```
+
+Будет сформирован запрос
+```
+SELECT  `b_iblock_element_property`.`ID`, `joined_table_alias`.* 
+FROM `b_iblock_element_property`
+INNER JOIN `b_iblock_element_property` AS `joined_table_alias` ON `joined_table_alias`.`iblock_element_id` = `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
+```
+
+#### Общий пример
+```
+<?php
+$selectBuilder = $connection->selectFrom("b_iblock_element_property");
+
+$result = $selectBuilder
+    ->whereEqual("IBLOCK_PROPERTY_ID", 31)
+    ->whereEqual("VALUE", 20)
+    ->join(
+        $selectBuilder->joinQuery("b_iblock_element_property", "iblock_element_id", "b_iblock_element_property", "IBLOCK_ELEMENT_ID", "INNER",  "slice_by_offer_prop")
+            ->addSelectField("IBLOCK_ELEMENT_ID", "PRODUCT_ID")
+            ->setWhere(
+                $connection->selectFrom("slice_by_offer_prop")
+                    ->whereEqual("IBLOCK_PROPERTY_ID", 28)
+            )
+    )
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  `slice_by_offer_prop`.`IBLOCK_ELEMENT_ID` AS `PRODUCT_ID` 
+FROM `b_iblock_element_property`
+INNER JOIN `b_iblock_element_property` AS `slice_by_offer_prop` ON `slice_by_offer_prop`.`iblock_element_id` = `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
+WHERE  (
+	`b_iblock_element_property`.`IBLOCK_PROPERTY_ID` = '31'
+) AND (
+	`b_iblock_element_property`.`VALUE` = '20'
+) AND (
+	`slice_by_offer_prop`.`IBLOCK_PROPERTY_ID` = '28'
+)
+```
+
+## Настройка WHERE
+
+### Операции сравнения
+#### Пример
+ 
+```
+<?php
+$selectBuilder
+    ->whereEqual("sort", 100)
+    ->whereNotEqual("sort", 100)
+    
+    ->whereLower("sort", 600)
+    ->whereLowerOrEqual("sort", 600)
+    
+    ->whereGreater("sort", 600)
+    ->whereGreaterOrEqual("sort", 600)
+    
+    ->whereIn("sort", [ 100, 200, 300 ])
+    ->whereNotIn("sort", [ 400, 500, 600 ])
+```
+
+#### Общий пример
+```
+<?php
+$selectBuilder = $connection->selectFrom("b_iblock");
+
+$result = $selectBuilder
+    ->addSelectField("ID")
+    ->addSelectField("NAME")
+    ->addSelectField("CODE")
+    
+    ->whereEqual("sort", 100)
+    ->whereNotEqual("sort", 100)
+    
+    ->whereLower("sort", 600)
+    ->whereLowerOrEqual("sort", 600)
+    
+    ->whereGreater("sort", 600)
+    ->whereGreaterOrEqual("sort", 600)
+    
+    ->whereIn("sort", [ 100, 200, 300 ])
+    ->whereNotIn("sort", [ 400, 500, 600 ])
+    
+    ->whereLike("code", "product", $inFront = false, $inEnd = true)
+    ->whereLike("code", "new", $inFront = true, $inEnd = true)
+    ->whereNotLike("code", "offer", $inFront = true, $inEnd = false)
+    
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  `b_iblock`.`ID`, `b_iblock`.`NAME`, `b_iblock`.`CODE` 
+FROM `b_iblock`
+WHERE  (
+	`b_iblock`.`sort` = '100'
+) AND (
+	`b_iblock`.`sort` != '100'
+) AND (
+	`b_iblock`.`sort` < '600'
+) AND (
+	`b_iblock`.`sort` <= '600'
+) AND (
+	`b_iblock`.`sort` > '600'
+) AND (
+	`b_iblock`.`sort` >= '600'
+) AND (
+	`b_iblock`.`sort` IN  (
+		'100', '200', '300'
+	) 
+) AND NOT  (
+	`b_iblock`.`sort` IN  (
+		'400', '500', '600'
+	) 
+) AND (
+	`b_iblock`.`code` LIKE 'product%'
+) AND (
+	`b_iblock`.`code` LIKE '%new%'
+) AND NOT  (
+	`b_iblock`.`code` LIKE '%offer'
+)
+```
+
+### Логические операторы NOT, OR, OR NOT
+
+#### Общий пример
+```
+<?php
+$selectBuilder = $connection->selectFrom("b_iblock");
+
+$result = $selectBuilder
+    ->addSelectField("ID")
+    ->addSelectField("NAME")
+    ->addSelectField("CODE")
+    
+    ->whereEqual("NAME", "Товары")
+    ->whereEqual("code", "products")
+    
+    ->whereOr(
+        $selectBuilder->newQuery()
+            ->whereEqual("sort", 500)
+    )
+    ->whereNot(
+        $selectBuilder->newQuery()
+            ->whereEqual("code", "products_offers")
+            ->whereEqual("code", "payment")
+    )
+    ->whereOr(
+        $selectBuilder->newQuery()
+            ->whereEqual("code", "products_offers")
+            ->whereEqual("code", "payment")
+    )
+    ->whereOrNot(
+        $selectBuilder->newQuery()
+            ->whereEqual("code", "payment")
+            ->whereEqual("code", "payment")
+    )
+    ->whereNot(
+        $selectBuilder->newQuery()
+            ->whereNot(
+                $selectBuilder->newQuery()
+                    ->whereEqual("code", "products_offers")
+                    ->whereEqual("code", "payment")
+                    ->whereNot(
+                        $selectBuilder->newQuery()
+                            ->whereEqual("code", "products_offers")
+                            ->whereEqual("code", "payment")
+                    )
+            )
+    )
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  `b_iblock`.`ID`, `b_iblock`.`NAME`, `b_iblock`.`CODE` 
+FROM `b_iblock`
+WHERE  (
+	`b_iblock`.`NAME` = 'Товары'
+) AND (
+	`b_iblock`.`code` = 'products'
+) OR (
+	 (
+		`b_iblock`.`sort` = '500'
+	) 
+) AND NOT  (
+	 (
+		`b_iblock`.`code` = 'products_offers'
+	) AND (
+		`b_iblock`.`code` = 'payment'
+	) 
+) OR (
+	 (
+		`b_iblock`.`code` = 'products_offers'
+	) AND (
+		`b_iblock`.`code` = 'payment'
+	) 
+) OR NOT  (
+	 (
+		`b_iblock`.`code` = 'payment'
+	) AND (
+		`b_iblock`.`code` = 'payment'
+	) 
+) AND NOT  (
+	 NOT  (
+		 (
+			`b_iblock`.`code` = 'products_offers'
+		) AND (
+			`b_iblock`.`code` = 'payment'
+		) AND NOT  (
+			 (
+				`b_iblock`.`code` = 'products_offers'
+			) AND (
+				`b_iblock`.`code` = 'payment'
+			) 
+		) 
+	) 
+)
+```
+
+### Подзапрос
+#### Пример
+ 
+```
+<?php
+
+$selectBuilder = $connection->selectFrom("b_iblock_element");
+$selectBuilderSubquery = $connection->selectFrom("b_iblock_element");
+
+$selectBuilderSubquery
+    ->addSelectField("ID")
+    ->whereEqual("SORT", 500)
+;
+
+$result = $selectBuilder
+    ->whereInSubquery("ID", $selectBuilderSubquery)
+```
+
+Будет сформирован запрос
+```
+SELECT  * 
+FROM `b_iblock_element`
+WHERE  (
+	`b_iblock_element`.`ID` IN  (
+		SELECT  `b_iblock_element`.`ID` 
+		FROM `b_iblock_element`
+		
+		WHERE  (
+			`b_iblock_element`.`SORT` = '500'
+		)
+	) 
+)
+```
+
+#### Общий пример
+**Задача**: 
+отфильтровать товары по свойствам торговых предложений. Найти обувь 43 размера.
+Размер - свойство типа список, 43 размер - это ENUM_ID=20. ID свойства "размер" = 31, ID свойства "привязка к товару" = 28. 
+
+**Решение**:
+Сначала нужно отфильтровать торговые предложения по размеру, затем присоединить свнова таблицу со свойствами товаров (этих самых ТП), и взять оттуда только значение свойства=28, то есть получить IDшники товаров, к которым относятся ТП.
+Это и будут итогвовые товары по фильтру.
+
+Этот запрос подставляем в качестве подзапроса.
+```
+<?php
+
+$selectBuilderSubquery = $connection->selectFrom("b_iblock_element_property");
+
+$selectBuilderSubquery
+    // filter by offer prop "size"
+    ->whereEqual("IBLOCK_PROPERTY_ID", 31)
+    ->whereEqual("VALUE", 20)
+    ->join(
+        $selectBuilderSubquery->joinQuery("b_iblock_element_property", "iblock_element_id", "b_iblock_element_property", "IBLOCK_ELEMENT_ID", "INNER",  "slice_by_offer_prop")
+            ->addSelectField("IBLOCK_ELEMENT_ID", "PRODUCT_ID")
+            ->setWhere(
+                $connection->selectFrom("slice_by_offer_prop")
+                    ->whereEqual("IBLOCK_PROPERTY_ID", 28)
+            )
+    )
+;
+
+
+$selectBuilderFIlteredProducts = $connection->selectFrom("b_iblock_element");
+
+$result = $selectBuilderFIlteredProducts
+    ->addSelectField("ID", "PRODUCT_ID")
+    ->addSelectField("NAME", "PRODUCT_NAME")
+    ->whereInSubquery("ID", $selectBuilderSubquery)
+    ->setLimit(10)
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  `b_iblock_element`.`ID` AS `PRODUCT_ID`, `b_iblock_element`.`NAME` AS `PRODUCT_NAME` 
+FROM `b_iblock_element`
+WHERE  (
+	`b_iblock_element`.`ID` IN  (
+		SELECT  `slice_by_offer_prop`.`IBLOCK_ELEMENT_ID` AS `PRODUCT_ID` 
+		FROM `b_iblock_element_property`
+		INNER JOIN `b_iblock_element_property` AS `slice_by_offer_prop` ON `slice_by_offer_prop`.`iblock_element_id` = `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
+		WHERE  (
+			`b_iblock_element_property`.`IBLOCK_PROPERTY_ID` = '31'
+		) AND (
+			`b_iblock_element_property`.`VALUE` = '20'
+		) AND (
+			`slice_by_offer_prop`.`IBLOCK_PROPERTY_ID` = '28'
+		)
+	) 
+) 
+LIMIT 10
+```
+
+## Настройка HAVING
+
+#### Общий пример
+```
+<?php
+$selectBuilder = $connection->selectFrom("test_table");
+
+$result = $selectBuilder
+    ->addGroupBy("column_1")
+    ->count("ID")
+    ->setHaving(
+        $selectBuilder->havingQuery()
+            ->whereEqual("COUNT", 2)
+            ->whereOr(
+                $selectBuilder->havingQuery()
+                    ->whereEqual("COUNT", 4)
+            )
+    )
+    ->addOrderbyAlias("COUNT")
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  COUNT( `debug`.`ID` )  AS `COUNT` , `debug`.`param_1`
+FROM `debug`
+GROUP BY `debug`.`param_1`
+HAVING  (
+	 (
+		`COUNT` = '2'
+	) OR (
+		 (
+			`COUNT` = '4'
+		) 
+	) 
+) 
+ORDER BY `COUNT` ASC
+```
+
+## Настройка UNION
+
+#### Общий пример
+```
+<?php
+$selectBuilder = $connection->selectFrom("b_iblock_element");
+$catalogIbockId = 2;
+
+$result = $selectBuilder
+    ->addSelectField("SORT")
+    ->whereEqual("iblock_id", $catalogIbockId)
+    ->whereEqual("ACTIVE", "Y")
+    ->setLimit(1)
+    ->union(
+        $selectBuilder->unionQuery()
+            ->whereEqual("iblock_id", $catalogIbockId)
+            ->whereEqual("ACTIVE", "N")
+            ->setLimit(2)
+    )
+    ->union(
+        $selectBuilder->unionQuery()
+            ->whereEqual("iblock_id", $catalogIbockId)
+            ->whereEqual("ACTIVE", "N")
+            ->whereEqual("SORT", 500)
+            ->setLimit(3)
+    )
+    ->fetchAll();
+```
+
+Будет сформирован запрос
+```
+SELECT  `b_iblock_element`.`SORT` 
+FROM `b_iblock_element`
+
+WHERE  (
+	`b_iblock_element`.`iblock_id` = '2'
+) AND (
+	`b_iblock_element`.`ACTIVE` = 'Y'
+) 
+
+
+
+LIMIT 1
+UNION (
+	SELECT  `b_iblock_element`.`SORT` 
+	FROM `b_iblock_element`
+	
+	WHERE  (
+		`b_iblock_element`.`iblock_id` = '2'
+	) AND (
+		`b_iblock_element`.`ACTIVE` = 'N'
+	) 
+	
+	
+	
+	LIMIT 2
+) 
+UNION (
+	SELECT  `b_iblock_element`.`SORT` 
+	FROM `b_iblock_element`
+	
+	WHERE  (
+		`b_iblock_element`.`iblock_id` = '2'
+	) AND (
+		`b_iblock_element`.`ACTIVE` = 'N'
+	) AND (
+		`b_iblock_element`.`SORT` = '500'
+	) 
+	
+	
+	
+	LIMIT 3
+)
+```

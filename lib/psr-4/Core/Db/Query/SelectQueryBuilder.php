@@ -640,13 +640,7 @@ $union
         $result = "";
     
         foreach ( $this->union as $item ) {
-            $result .= "
-            
-            UNION (
-                $item
-            )
-            
-            ";
+            $result .= "UNION" . DbHelper::wrapWithBraketsAndTabulate($item) . "\n";
         }
         
         return $result;
