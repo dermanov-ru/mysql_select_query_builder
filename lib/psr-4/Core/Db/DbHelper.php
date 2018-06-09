@@ -60,7 +60,7 @@ class DbHelper
     
     public static function wrapWithBraketsAndTabulate( $str )
     {
-        $result = " ( " . self::tab($str) . " ) ";
+        $result = " (" . self::tab($str) . ") ";
         
         return $result;
     }
