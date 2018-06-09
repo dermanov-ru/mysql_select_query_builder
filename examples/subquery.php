@@ -84,12 +84,11 @@ $result = $selectBuilderSubquery
     ->whereEqual("IBLOCK_PROPERTY_ID", 31)
     ->whereEqual("VALUE", 20)
     ->join(
-        (new \Core\Db\Query\JoinQueryBuilder("b_iblock_element_property", "iblock_element_id", "b_iblock_element_property", "IBLOCK_ELEMENT_ID", "INNER",  "slice_by_offer_prop"))
+        $selectBuilderSubquery->joinQuery("b_iblock_element_property", "iblock_element_id", "b_iblock_element_property", "IBLOCK_ELEMENT_ID", "INNER",  "slice_by_offer_prop")
             ->addSelectField("IBLOCK_ELEMENT_ID", "PRODUCT_ID")
             ->setWhere(
-                (new \Core\Db\Query\SelectQueryBuilder("slice_by_offer_prop", \Core\Db\DbManager::getConnection()))
+                $connection->selectFrom("slice_by_offer_prop")
                     ->whereEqual("IBLOCK_PROPERTY_ID", 28)
-                    //->whereEqual("VALUE", 36923)
             )
     )
 ;
