@@ -283,7 +283,7 @@ $selectBuilder
 $selectBuilder = $connection->selectFrom("b_iblock_element_property");
 
 $result = $selectBuilder
-    ->addSelectField("IBLOCK_PROPERTY_ID")
+    ->addSelectField("IBLOCK_ELEMENT_ID")
     ->addSelectField("IBLOCK_PROPERTY_ID")
     ->count("ID", false, "COUNT")
     ->addGroupBy("IBLOCK_PROPERTY_ID")
@@ -295,7 +295,7 @@ $result = $selectBuilder
 
 Будет сформирован запрос
 ```
-SELECT  `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, COUNT( `b_iblock_element_property`.`ID` )  AS `COUNT` , `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
+SELECT  `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`, `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, COUNT( `b_iblock_element_property`.`ID` )  AS `COUNT` , `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
 FROM `b_iblock_element_property`
 GROUP BY `b_iblock_element_property`.`IBLOCK_PROPERTY_ID`, `b_iblock_element_property`.`IBLOCK_ELEMENT_ID`
 ORDER BY `COUNT` DESC
@@ -370,6 +370,8 @@ $selectBuilder
     
     ->whereLower("sort", 600)
     ->whereLowerOrEqual("sort", 600)
+    
+    ->whereBetween("sort", 400, 600, $includeFrom = true, $includeTo = true)
     
     ->whereGreater("sort", 600)
     ->whereGreaterOrEqual("sort", 600)
